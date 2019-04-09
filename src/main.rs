@@ -61,7 +61,7 @@ fn two_spheres() -> Box<Hitable> {
 }
 
 fn two_perlin_spheres() -> Box<Hitable> {
-    let noise = NoiseTexture::new();
+    let noise = NoiseTexture::new(4.0);
     let mut world = HitableList::default();
     world.push(Sphere::new(Vector3::new(0.0, -1000.0, 0.0), 1000.0, Lambertian::new(noise.clone())));
     world.push(Sphere::new(Vector3::new(0.0, 2.0, 0.0), 2.0, Lambertian::new(noise)));
