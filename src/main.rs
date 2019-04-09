@@ -3,8 +3,11 @@ mod hitable;
 mod material;
 mod sphere;
 mod camera;
+mod aabb;
+mod bvh;
 
 use std::f32;
+use std::rc::Rc;
 use nalgebra::Vector3;
 use rand::Rng;
 use crate::ray::Ray;
@@ -12,38 +15,40 @@ use crate::material::{Lambertian, Metal, Dielectric};
 use crate::hitable::{Hitable, HitableList};
 use crate::sphere::{Sphere, MovingSphere};
 use crate::camera::Camera;
+use crate::bvh::BVHNode;
 
-fn random_scene() -> HitableList {
+fn random_scene() -> Box<Hitable> {
     let mut rng = rand::thread_rng();
     let origin = Vector3::new(4.0, 0.2, 0.0);
-    let mut world = HitableList::default();
-    world.push(Sphere::new(Vector3::new(0.0, -1000.0, 0.0), 1000.0, Lambertian::new(Vector3::new(0.5, 0.5, 0.5))));
+    let mut world: Vec<Rc<Hitable>> = Vec::new();
+    world.push(Rc::new(Sphere::new(Vector3::new(0.0, -1000.0, 0.0), 1000.0, Lambertian::new(Vector3::new(0.5, 0.5, 0.5)))));
     for a in -10..10 {
         for b in -10..10 {
             let choose_material = rng.gen::<f32>();
             let center = Vector3::new(a as f32 + 0.9 * rng.gen::<f32>(), 0.2, b as f32 + 0.9 * rng.gen::<f32>());
             if (center - origin).magnitude() > 0.9 {
                 if choose_material < 0.8 { // diffuse
-                    world.push(
+                    world.push(Rc::new(
                         MovingSphere::new(center, center + Vector3::new(0.0, 0.5 * rng.gen::<f32>(), 0.0),0.0,1.0,0.2,
-                                    Lambertian::new(Vector3::new(rng.gen::<f32>() * rng.gen::<f32>(), rng.gen::<f32>() * rng.gen::<f32>(), rng.gen::<f32>() * rng.gen::<f32>()))));
+                                    Lambertian::new(Vector3::new(rng.gen::<f32>() * rng.gen::<f32>(), rng.gen::<f32>() * rng.gen::<f32>(), rng.gen::<f32>() * rng.gen::<f32>())))));
                 } else if choose_material < 0.95 { // metal
-                    world.push(
+                    world.push(Rc::new(
                         Sphere::new(center, 0.2,
-                                    Metal::new(Vector3::new(0.5 * (1.0 + rng.gen::<f32>()), 0.5 * (1.0 + rng.gen::<f32>()), 0.5 * (1.0 + rng.gen::<f32>())), 0.5 * rng.gen::<f32>())));
+                                    Metal::new(Vector3::new(0.5 * (1.0 + rng.gen::<f32>()), 0.5 * (1.0 + rng.gen::<f32>()), 0.5 * (1.0 + rng.gen::<f32>())), 0.5 * rng.gen::<f32>()))));
                 } else { // glass
-                    world.push(Sphere::new(center, 0.2, Dielectric::new(1.5)));
+                    world.push(Rc::new(
+                        Sphere::new(center, 0.2, Dielectric::new(1.5))));
                 }
             }
         }
     }
-    world.push(Sphere::new(Vector3::new(0.0, 1.0, 0.0), 1.0, Dielectric::new(1.5)));
-    world.push(Sphere::new(Vector3::new(-4.0, 1.0, 0.0), 1.0, Lambertian::new(Vector3::new(0.4, 0.2, 0.1))));
-    world.push(Sphere::new(Vector3::new(4.0, 1.0, 0.0), 1.0, Metal::new(Vector3::new(0.7, 0.6, 0.5), 0.0)));
-    world
+    world.push(Rc::new(Sphere::new(Vector3::new(0.0, 1.0, 0.0), 1.0, Dielectric::new(1.5))));
+    world.push(Rc::new(Sphere::new(Vector3::new(-4.0, 1.0, 0.0), 1.0, Lambertian::new(Vector3::new(0.4, 0.2, 0.1)))));
+    world.push(Rc::new(Sphere::new(Vector3::new(4.0, 1.0, 0.0), 1.0, Metal::new(Vector3::new(0.7, 0.6, 0.5), 0.0))));
+    Box::new(BVHNode::new(&mut world, 0.0, 1.0))
 }
 
-fn color(ray: &Ray, world: &HitableList, depth: i32) -> Vector3<f32> {
+fn color(ray: &Ray, world: &Box<Hitable>, depth: i32) -> Vector3<f32> {
     if let Some(hit) = world.hit(ray, 0.001, f32::MAX) {
         if depth < 50 {
             if let Some((scattered, attenuation)) = hit.material.scatter(&ray, &hit) {
@@ -53,7 +58,7 @@ fn color(ray: &Ray, world: &HitableList, depth: i32) -> Vector3<f32> {
         Vector3::new(0.0, 0.0, 0.0)
     } else {
         let unit_direction = ray.direction().normalize();
-        let t = 0.5 * (unit_direction[1] + 1.0);
+        let t = 0.5 * (unit_direction.y + 1.0);
         (1.0 - t) * Vector3::new(1.0, 1.0, 1.0) + t * Vector3::new(0.5, 0.7, 1.0)
     }
 }

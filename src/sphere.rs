@@ -2,6 +2,8 @@ use nalgebra::Vector3;
 use crate::ray::Ray;
 use crate::hitable::{Hitable, HitRecord};
 use crate::material::Material;
+use crate::aabb;
+use crate::aabb::AABB;
 
 pub struct Sphere<M: Material> {
     center: Vector3<f32>,
@@ -36,6 +38,13 @@ impl<M: Material> Hitable for Sphere<M> {
             }
         }
         None
+    }
+
+    fn bounding_box(&self, _t0: f32, _t1: f32) -> Option<AABB> {
+        let radius = Vector3::new(self.radius, self.radius, self. radius);
+        let min = self.center - radius;
+        let max = self.center + radius;
+        Some(AABB { min, max })
     }
 }
 
@@ -82,5 +91,16 @@ impl<M: Material> Hitable for MovingSphere<M> {
             }
         }
         None
+    }
+
+    fn bounding_box(&self, t0: f32, t1: f32) -> Option<AABB> {
+        let radius = Vector3::new(self.radius, self.radius, self. radius);
+        let min0 = self.center(t0) - radius;
+        let max0 = self.center(t0) + radius;
+        let min1 = self.center(t1) - radius;
+        let max1 = self.center(t0) + radius;
+        let aabb0 = AABB::new(min0, max0);
+        let aabb1 = AABB::new(min1, max1);
+        Some(aabb::surrounding_box(&aabb0, &aabb1))
     }
 }

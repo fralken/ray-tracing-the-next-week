@@ -1,6 +1,8 @@
 use nalgebra::Vector3;
 use crate::ray::Ray;
 use crate::material::Material;
+use crate::aabb;
+use crate::aabb::AABB;
 
 pub struct HitRecord<'a> {
     pub t: f32,
@@ -11,6 +13,7 @@ pub struct HitRecord<'a> {
 
 pub trait Hitable {
     fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<HitRecord>;
+    fn bounding_box(&self, t0: f32, t1: f32) -> Option<AABB>;
 }
 
 #[derive(Default)]
@@ -35,5 +38,22 @@ impl Hitable for HitableList {
             }
         }
         hit_anything
+    }
+
+    fn bounding_box(&self, t0: f32, t1: f32) -> Option<AABB> {
+        match self.list.first() {
+            Some(first) =>
+                match first.bounding_box(t0, t1) {
+                    Some(bbox) =>
+                        self.list.iter().skip(1).try_fold(bbox, |acc, hitable|
+                            match hitable.bounding_box(t0, t1) {
+                                Some(bbox) => Some(aabb::surrounding_box(&acc, &bbox)),
+                                _ => None
+                            }
+                        ),
+                    _ => None
+                },
+            _ => None
+        }
     }
 }
