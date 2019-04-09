@@ -27,7 +27,7 @@ fn perlin_generate_perm() -> Vec<usize> {
     p
 }
 
-fn trilinear_interop(c: &[[[f32; 2]; 2]; 2], u: f32, v: f32, w: f32) -> f32 {
+fn trilinear_interp(c: &[[[f32; 2]; 2]; 2], u: f32, v: f32, w: f32) -> f32 {
     let mut accum = 0.0;
     for i in 0..2 {
         for j in 0..2 {
@@ -63,6 +63,9 @@ impl Perlin {
         let u = p.x - f32::floor(p.x);
         let v = p.y - f32::floor(p.y);
         let w = p.z - f32::floor(p.z);
+        let u = u * u * (3.0 - 2.0 * u);
+        let v = v * v * (3.0 - 2.0 * v);
+        let w = w * w * (3.0 - 2.0 * w);
         let i = f32::floor(p.x) as usize;
         let j = f32::floor(p.y) as usize;
         let k = f32::floor(p.z) as usize;
@@ -75,6 +78,6 @@ impl Perlin {
                 }
             }
         };
-        trilinear_interop(&c, u, v, w)
+        trilinear_interp(&c, u, v, w)
     }
 }
