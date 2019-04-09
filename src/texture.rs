@@ -4,6 +4,7 @@ pub trait Texture {
     fn value(&self, u: f32, v: f32, p: &Vector3<f32>) -> Vector3<f32>;
 }
 
+#[derive(Clone)]
 pub struct ConstantTexture {
     color: Vector3<f32>
 }
@@ -20,6 +21,7 @@ impl Texture for ConstantTexture {
     fn value(&self, _u: f32, _v: f32, _p: &Vector3<f32>) -> Vector3<f32> { self.color }
 }
 
+#[derive(Clone)]
 pub struct CheckerTexture<T: Texture, U: Texture> {
     odd: T,
     even: U
