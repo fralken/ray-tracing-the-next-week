@@ -1,5 +1,6 @@
 mod ray;
 mod hitable;
+mod texture;
 mod material;
 mod sphere;
 mod camera;
@@ -11,6 +12,7 @@ use std::rc::Rc;
 use nalgebra::Vector3;
 use rand::Rng;
 use crate::ray::Ray;
+use crate::texture::{ConstantTexture, CheckerTexture};
 use crate::material::{Lambertian, Metal, Dielectric};
 use crate::hitable::{Hitable, HitableList};
 use crate::sphere::{Sphere, MovingSphere};
@@ -21,7 +23,8 @@ fn random_scene() -> Box<Hitable> {
     let mut rng = rand::thread_rng();
     let origin = Vector3::new(4.0, 0.2, 0.0);
     let mut world: Vec<Rc<Hitable>> = Vec::new();
-    world.push(Rc::new(Sphere::new(Vector3::new(0.0, -1000.0, 0.0), 1000.0, Lambertian::new(Vector3::new(0.5, 0.5, 0.5)))));
+    let checker = CheckerTexture::new(ConstantTexture::new(0.2, 0.3, 0.1), ConstantTexture::new(0.9, 0.9, 0.9));
+    world.push(Rc::new(Sphere::new(Vector3::new(0.0, -1000.0, 0.0), 1000.0, Lambertian::new(checker))));
     for a in -10..10 {
         for b in -10..10 {
             let choose_material = rng.gen::<f32>();
@@ -30,7 +33,7 @@ fn random_scene() -> Box<Hitable> {
                 if choose_material < 0.8 { // diffuse
                     world.push(Rc::new(
                         MovingSphere::new(center, center + Vector3::new(0.0, 0.5 * rng.gen::<f32>(), 0.0),0.0,1.0,0.2,
-                                    Lambertian::new(Vector3::new(rng.gen::<f32>() * rng.gen::<f32>(), rng.gen::<f32>() * rng.gen::<f32>(), rng.gen::<f32>() * rng.gen::<f32>())))));
+                                    Lambertian::new(ConstantTexture::new(rng.gen::<f32>() * rng.gen::<f32>(), rng.gen::<f32>() * rng.gen::<f32>(), rng.gen::<f32>() * rng.gen::<f32>())))));
                 } else if choose_material < 0.95 { // metal
                     world.push(Rc::new(
                         Sphere::new(center, 0.2,
@@ -43,7 +46,7 @@ fn random_scene() -> Box<Hitable> {
         }
     }
     world.push(Rc::new(Sphere::new(Vector3::new(0.0, 1.0, 0.0), 1.0, Dielectric::new(1.5))));
-    world.push(Rc::new(Sphere::new(Vector3::new(-4.0, 1.0, 0.0), 1.0, Lambertian::new(Vector3::new(0.4, 0.2, 0.1)))));
+    world.push(Rc::new(Sphere::new(Vector3::new(-4.0, 1.0, 0.0), 1.0, Lambertian::new(ConstantTexture::new(0.4, 0.2, 0.1)))));
     world.push(Rc::new(Sphere::new(Vector3::new(4.0, 1.0, 0.0), 1.0, Metal::new(Vector3::new(0.7, 0.6, 0.5), 0.0))));
     Box::new(BVHNode::new(&mut world, 0.0, 1.0))
 }

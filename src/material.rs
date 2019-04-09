@@ -2,6 +2,7 @@ use nalgebra::Vector3;
 use rand::Rng;
 use crate::ray::Ray;
 use crate::hitable::HitRecord;
+use crate::texture::Texture;
 
 fn random_in_unit_sphere() -> Vector3<f32> {
     let mut rng = rand::thread_rng();
@@ -39,19 +40,19 @@ pub trait Material {
     fn scatter(&self, ray: &Ray, hit: &HitRecord) -> Option<(Ray, Vector3<f32>)>;
 }
 
-pub struct Lambertian {
-    albedo: Vector3<f32>
+pub struct Lambertian<T: Texture> {
+    albedo: T
 }
 
-impl Lambertian {
-    pub fn new(albedo: Vector3<f32>) -> Self { Lambertian { albedo } }
+impl<T: Texture> Lambertian<T> {
+    pub fn new(albedo: T) -> Self { Lambertian { albedo } }
 }
 
-impl Material for Lambertian {
+impl<T: Texture> Material for Lambertian<T> {
     fn scatter(&self, ray: &Ray, hit: &HitRecord) -> Option<(Ray, Vector3<f32>)> {
         let target = hit.p + hit.normal + random_in_unit_sphere();
         let scattered = Ray::new(hit.p, target - hit.p, ray.time());
-        Some((scattered, self.albedo))
+        Some((scattered, self.albedo.value(0.0, 0.0, &hit.p)))
     }
 }
 
