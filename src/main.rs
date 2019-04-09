@@ -1,6 +1,7 @@
 mod ray;
 mod hitable;
 mod texture;
+mod perlin;
 mod material;
 mod sphere;
 mod camera;
@@ -12,7 +13,7 @@ use std::rc::Rc;
 use nalgebra::Vector3;
 use rand::Rng;
 use crate::ray::Ray;
-use crate::texture::{ConstantTexture, CheckerTexture};
+use crate::texture::{ConstantTexture, CheckerTexture, NoiseTexture};
 use crate::material::{Lambertian, Metal, Dielectric};
 use crate::hitable::{Hitable, HitableList};
 use crate::sphere::{Sphere, MovingSphere};
@@ -59,6 +60,15 @@ fn two_spheres() -> Box<Hitable> {
     Box::new(world)
 }
 
+fn two_perlin_spheres() -> Box<Hitable> {
+    let noise = NoiseTexture::new();
+    let mut world = HitableList::default();
+    world.push(Sphere::new(Vector3::new(0.0, -1000.0, 0.0), 1000.0, Lambertian::new(noise.clone())));
+    world.push(Sphere::new(Vector3::new(0.0, 2.0, 0.0), 2.0, Lambertian::new(noise)));
+    Box::new(world)
+}
+
+
 fn color(ray: &Ray, world: &Box<Hitable>, depth: i32) -> Vector3<f32> {
     if let Some(hit) = world.hit(ray, 0.001, f32::MAX) {
         if depth < 50 {
@@ -80,7 +90,7 @@ fn main() {
     let ny = 800;
     let ns = 10;
     println!("P3\n{} {}\n255", nx, ny);
-    let world = two_spheres();
+    let world = two_perlin_spheres();
     let look_from = Vector3::new(13.0, 2.0, 3.0);
     let look_at = Vector3::new(0.0, 0.0, 0.0);
     let focus_dist = 10.0;
