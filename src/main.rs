@@ -85,6 +85,7 @@ fn simple_light() -> Box<Hitable> {
     let mut world = HitableList::default();
     world.push(Sphere::new(Vector3::new(0.0, -1000.0, 0.0), 1000.0, Lambertian::new(noise.clone())));
     world.push(Sphere::new(Vector3::new(0.0, 2.0, 0.0), 2.0, Lambertian::new(noise)));
+    world.push(Sphere::new(Vector3::new(0.0, 7.0, 0.0), 2.0, DiffuseLight::new(ConstantTexture::new(4.0, 4.0, 4.0))));
     world.push(XYRect::new(3.0, 5.0, 1.0, 3.0, -2.0, DiffuseLight::new(ConstantTexture::new(4.0, 4.0, 4.0))));
     Box::new(world)
 }
