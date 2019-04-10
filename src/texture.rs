@@ -51,6 +51,6 @@ impl NoiseTexture {
 
 impl Texture for NoiseTexture {
     fn value(&self, _u: f32, _v: f32, p: &Vector3<f32>) -> Vector3<f32> {
-        Vector3::new(1.0, 1.0, 1.0) * self.noise.noise(&(self.scale * p))
+        Vector3::new(1.0, 1.0, 1.0) * self.noise.turb(&(self.scale * p), 7)
     }
 }

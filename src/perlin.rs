@@ -46,7 +46,7 @@ fn perlin_interp(c: &[[[Vector3<f32>; 2]; 2]; 2], u: f32, v: f32, w: f32) -> f32
             }
         }
     }
-    (accum + 1.0) * 0.5
+    accum
 }
 
 #[derive(Clone)]
@@ -67,7 +67,7 @@ impl Perlin {
         }
     }
 
-    pub fn noise(&self, p: &Vector3<f32>) -> f32 {
+    fn noise(&self, p: &Vector3<f32>) -> f32 {
         let u = p.x - f32::floor(p.x);
         let v = p.y - f32::floor(p.y);
         let w = p.z - f32::floor(p.z);
@@ -84,5 +84,17 @@ impl Perlin {
             }
         };
         perlin_interp(&c, u, v, w)
+    }
+
+    pub fn turb(&self, p: &Vector3<f32>, depth: usize) -> f32 {
+        let mut accum = 0.0;
+        let mut temp_p = *p;
+        let mut weight = 1.0;
+        for _ in 0..depth {
+            accum += weight * self.noise(&temp_p);
+            weight *= 0.5;
+            temp_p *= 2.0;
+        }
+        f32::abs(accum)
     }
 }
