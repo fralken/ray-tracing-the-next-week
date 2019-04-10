@@ -4,6 +4,7 @@ mod texture;
 mod perlin;
 mod material;
 mod sphere;
+mod rect;
 mod camera;
 mod aabb;
 mod bvh;
@@ -15,9 +16,10 @@ use rand::Rng;
 use image;
 use crate::ray::Ray;
 use crate::texture::{ConstantTexture, CheckerTexture, NoiseTexture, ImageTexture};
-use crate::material::{Lambertian, Metal, Dielectric};
+use crate::material::{Lambertian, Metal, Dielectric, DiffuseLight};
 use crate::hitable::{Hitable, HitableList};
 use crate::sphere::{Sphere, MovingSphere};
+use crate::rect::XYRect;
 use crate::camera::Camera;
 use crate::bvh::BVHNode;
 
@@ -78,18 +80,26 @@ fn earth() -> Box<Hitable> {
     Box::new(earth)
 }
 
+fn simple_light() -> Box<Hitable> {
+    let noise = NoiseTexture::new(4.0);
+    let mut world = HitableList::default();
+    world.push(Sphere::new(Vector3::new(0.0, -1000.0, 0.0), 1000.0, Lambertian::new(noise.clone())));
+    world.push(Sphere::new(Vector3::new(0.0, 2.0, 0.0), 2.0, Lambertian::new(noise)));
+    world.push(XYRect::new(3.0, 5.0, 1.0, 3.0, -2.0, DiffuseLight::new(ConstantTexture::new(4.0, 4.0, 4.0))));
+    Box::new(world)
+}
+
 fn color(ray: &Ray, world: &Box<Hitable>, depth: i32) -> Vector3<f32> {
     if let Some(hit) = world.hit(ray, 0.001, f32::MAX) {
+        let emitted = hit.material.emitted(hit.u, hit.v, &hit.p);
         if depth < 50 {
             if let Some((scattered, attenuation)) = hit.material.scatter(&ray, &hit) {
-                return attenuation.zip_map(&color(&scattered, &world, depth+1), |l, r| l * r);
+                return emitted + attenuation.zip_map(&color(&scattered, &world, depth+1), |l, r| l * r);
             }
         }
-        Vector3::new(0.0, 0.0, 0.0)
+        emitted
     } else {
-        let unit_direction = ray.direction().normalize();
-        let t = 0.5 * (unit_direction.y + 1.0);
-        (1.0 - t) * Vector3::new(1.0, 1.0, 1.0) + t * Vector3::new(0.5, 0.7, 1.0)
+        Vector3::new(0.0, 0.0, 0.0)
     }
 }
 
@@ -97,16 +107,16 @@ fn main() {
     let mut rng = rand::thread_rng();
     let nx = 1200;
     let ny = 800;
-    let ns = 10;
+    let ns = 100;
     println!("P3\n{} {}\n255", nx, ny);
-    let world = earth();
-    let look_from = Vector3::new(13.0, 2.0, 3.0);
+    let world = simple_light();
+    let look_from = Vector3::new(13.0, 3.0, 3.0);
     let look_at = Vector3::new(0.0, 0.0, 0.0);
     let focus_dist = 10.0;
     let aperture = 0.0;
     let cam = Camera::new(
         look_from, look_at, Vector3::new(0.0, 1.0, 0.0),
-        20.0, nx as f32 / ny as f32, aperture, focus_dist, 0.0, 1.0);
+        50.0, nx as f32 / ny as f32, aperture, focus_dist, 0.0, 1.0);
     for j in (0..ny).rev() {
         for i in 0..nx {
             let mut col = Vector3::new(0.0, 0.0, 0.0);
@@ -117,10 +127,11 @@ fn main() {
                 col += color(&ray, &world, 0);
             }
             col /= ns as f32;
-            for c in col.iter_mut() { *c = c.sqrt(); }
+            for c in col.iter_mut() { *c = nalgebra::clamp(c.sqrt(), 0.0, 1.0); }
             let ir = (255.99 * col[0]) as i32;
             let ig = (255.99 * col[1]) as i32;
             let ib = (255.99 * col[2]) as i32;
+
             println!("{} {} {}", ir, ig, ib);
         }
     }

@@ -38,6 +38,8 @@ fn schlick(cosine: f32, ref_idx: f32) -> f32 {
 
 pub trait Material {
     fn scatter(&self, ray: &Ray, hit: &HitRecord) -> Option<(Ray, Vector3<f32>)>;
+
+    fn emitted(&self, u: f32, v: f32, p: &Vector3<f32>) -> Vector3<f32>;
 }
 
 pub struct Lambertian<T: Texture> {
@@ -54,6 +56,8 @@ impl<T: Texture> Material for Lambertian<T> {
         let scattered = Ray::new(hit.p, target - hit.p, ray.time());
         Some((scattered, self.albedo.value(hit.u, hit.v, &hit.p)))
     }
+
+    fn emitted(&self, u: f32, v: f32, p: &Vector3<f32>) -> Vector3<f32> { Vector3::new(0.0, 0.0, 0.0) }
 }
 
 pub struct Metal {
@@ -78,6 +82,8 @@ impl Material for Metal {
             None
         }
     }
+
+    fn emitted(&self, u: f32, v: f32, p: &Vector3<f32>) -> Vector3<f32> { Vector3::new(0.0, 0.0, 0.0) }
 }
 
 pub struct Dielectric {
@@ -108,5 +114,24 @@ impl Material for Dielectric {
         let reflected = reflect(&ray.direction(), &hit.normal);
         let scattered = Ray::new(hit.p, reflected, ray.time());
         Some((scattered, attenuation))
+    }
+
+    fn emitted(&self, u: f32, v: f32, p: &Vector3<f32>) -> Vector3<f32> { Vector3::new(0.0, 0.0, 0.0) }
+}
+
+pub struct DiffuseLight<T: Texture> {
+    emit: T
+}
+
+impl<T: Texture> DiffuseLight<T> {
+    pub fn new(emit: T) -> Self { DiffuseLight { emit } }
+}
+
+
+impl<T: Texture> Material for DiffuseLight<T> {
+    fn scatter(&self, ray: &Ray, hit: &HitRecord) -> Option<(Ray, Vector3<f32>)> { None }
+
+    fn emitted(&self, u: f32, v: f32, p: &Vector3<f32>) -> Vector3<f32> {
+        self.emit.value(u, v, &p)
     }
 }
