@@ -12,8 +12,9 @@ use std::f32;
 use std::rc::Rc;
 use nalgebra::Vector3;
 use rand::Rng;
+use image;
 use crate::ray::Ray;
-use crate::texture::{ConstantTexture, CheckerTexture, NoiseTexture};
+use crate::texture::{ConstantTexture, CheckerTexture, NoiseTexture, ImageTexture};
 use crate::material::{Lambertian, Metal, Dielectric};
 use crate::hitable::{Hitable, HitableList};
 use crate::sphere::{Sphere, MovingSphere};
@@ -68,6 +69,14 @@ fn two_perlin_spheres() -> Box<Hitable> {
     Box::new(world)
 }
 
+fn earth() -> Box<Hitable> {
+    let image = image::open("earthmap.png").expect("image not found").to_rgb();
+    let (nx, ny) = image.dimensions();
+    let data = image.into_raw();
+    let texture = ImageTexture::new(data, nx, ny);
+    let earth = Sphere::new(Vector3::new(0.0, 0.0, 0.0), 2.0, Lambertian::new(texture));
+    Box::new(earth)
+}
 
 fn color(ray: &Ray, world: &Box<Hitable>, depth: i32) -> Vector3<f32> {
     if let Some(hit) = world.hit(ray, 0.001, f32::MAX) {
@@ -90,7 +99,7 @@ fn main() {
     let ny = 800;
     let ns = 10;
     println!("P3\n{} {}\n255", nx, ny);
-    let world = two_perlin_spheres();
+    let world = earth();
     let look_from = Vector3::new(13.0, 2.0, 3.0);
     let look_at = Vector3::new(0.0, 0.0, 0.0);
     let focus_dist = 10.0;

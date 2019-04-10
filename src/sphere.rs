@@ -1,9 +1,18 @@
+use std::f32;
 use nalgebra::Vector3;
 use crate::ray::Ray;
 use crate::hitable::{Hitable, HitRecord};
 use crate::material::Material;
 use crate::aabb;
 use crate::aabb::AABB;
+
+fn get_sphere_uv(p: &Vector3<f32>) -> (f32, f32) {
+    let phi = p.z.atan2(p.x);
+    let theta = p.y.asin();
+    let u = 1.0 - (phi + f32::consts::PI) / (2.0 * f32::consts::PI);
+    let v = (theta + f32::consts::FRAC_PI_2) / f32::consts::PI;
+    (u, v)
+}
 
 pub struct Sphere<M: Material> {
     center: Vector3<f32>,
@@ -28,13 +37,15 @@ impl<M: Material> Hitable for Sphere<M> {
             if t < t_max && t > t_min {
                 let p = ray.point_at_parameter(t);
                 let normal = (p - self.center) / self.radius;
-                return Some(HitRecord { t, p, normal, material: &self.material })
+                let (u, v) = get_sphere_uv(&normal);
+                return Some(HitRecord { t, u, v, p, normal, material: &self.material })
             }
             let t = (-b + sqrt_discriminant) / a;
             if t < t_max && t > t_min {
                 let p = ray.point_at_parameter(t);
                 let normal = (p - self.center) / self.radius;
-                return Some(HitRecord { t, p, normal, material: &self.material })
+                let (u, v) = get_sphere_uv(&normal);
+                return Some(HitRecord { t, u, v, p, normal, material: &self.material })
             }
         }
         None
@@ -81,13 +92,15 @@ impl<M: Material> Hitable for MovingSphere<M> {
             if t < t_max && t > t_min {
                 let p = ray.point_at_parameter(t);
                 let normal = (p - center) / self.radius;
-                return Some(HitRecord { t, p, normal, material: &self.material })
+                let (u, v) = get_sphere_uv(&normal);
+                return Some(HitRecord { t, u, v, p, normal, material: &self.material })
             }
             let t = (-b + sqrt_discriminant) / a;
             if t < t_max && t > t_min {
                 let p = ray.point_at_parameter(t);
                 let normal = (p - center) / self.radius;
-                return Some(HitRecord { t, p, normal, material: &self.material })
+                let (u, v) = get_sphere_uv(&normal);
+                return Some(HitRecord { t, u, v, p, normal, material: &self.material })
             }
         }
         None

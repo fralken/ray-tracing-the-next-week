@@ -6,6 +6,8 @@ use crate::aabb::AABB;
 
 pub struct HitRecord<'a> {
     pub t: f32,
+    pub u: f32,
+    pub v: f32,
     pub p: Vector3<f32>,
     pub normal: Vector3<f32>,
     pub material: &'a Material

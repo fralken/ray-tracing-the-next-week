@@ -52,7 +52,7 @@ impl<T: Texture> Material for Lambertian<T> {
     fn scatter(&self, ray: &Ray, hit: &HitRecord) -> Option<(Ray, Vector3<f32>)> {
         let target = hit.p + hit.normal + random_in_unit_sphere();
         let scattered = Ray::new(hit.p, target - hit.p, ray.time());
-        Some((scattered, self.albedo.value(0.0, 0.0, &hit.p)))
+        Some((scattered, self.albedo.value(hit.u, hit.v, &hit.p)))
     }
 }
 
