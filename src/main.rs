@@ -5,6 +5,7 @@ mod perlin;
 mod material;
 mod sphere;
 mod rect;
+mod cube;
 mod camera;
 mod aabb;
 mod bvh;
@@ -17,7 +18,7 @@ use image;
 use crate::ray::Ray;
 use crate::texture::{ConstantTexture, CheckerTexture, NoiseTexture, ImageTexture};
 use crate::material::{Lambertian, Metal, Dielectric, DiffuseLight};
-use crate::hitable::{Hitable, HitableList};
+use crate::hitable::{Hitable, HitableList, FlipNormals};
 use crate::sphere::{Sphere, MovingSphere};
 use crate::rect::{AARect, Plane};
 use crate::camera::Camera;
@@ -96,11 +97,12 @@ fn cornell_box() -> Box<Hitable> {
     let green = Lambertian::new(ConstantTexture::new(0.12, 0.45, 0.15));
     let light = DiffuseLight::new(ConstantTexture::new(15.0, 15.0, 15.0));
     let mut world = HitableList::default();
-    world.push(AARect::new(Plane::YZ, 0.0, 555.0, 0.0, 555.0, 555.0, green));
+    world.push(FlipNormals::new(AARect::new(Plane::YZ, 0.0, 555.0, 0.0, 555.0, 555.0, green)));
     world.push(AARect::new(Plane::YZ, 0.0, 555.0, 0.0, 555.0, 0.0, red));
     world.push(AARect::new(Plane::ZX, 227.0, 332.0, 213.0, 343.0, 554.0, light));
+    world.push(FlipNormals::new(AARect::new(Plane::ZX, 0.0, 555.0, 0.0, 555.0, 555.0, white.clone())));
     world.push(AARect::new(Plane::ZX, 0.0, 555.0, 0.0, 555.0, 0.0, white.clone()));
-    world.push(AARect::new(Plane::XY, 0.0, 555.0, 0.0, 555.0, 555.0, white));
+    world.push(FlipNormals::new(AARect::new(Plane::XY, 0.0, 555.0, 0.0, 555.0, 555.0, white)));
     Box::new(world)
 }
 
