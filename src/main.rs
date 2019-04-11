@@ -21,6 +21,7 @@ use crate::material::{Lambertian, Metal, Dielectric, DiffuseLight};
 use crate::hitable::{Hitable, HitableList, FlipNormals};
 use crate::sphere::{Sphere, MovingSphere};
 use crate::rect::{AARect, Plane};
+use crate::cube::Cube;
 use crate::camera::Camera;
 use crate::bvh::BVHNode;
 
@@ -102,7 +103,9 @@ fn cornell_box() -> Box<Hitable> {
     world.push(AARect::new(Plane::ZX, 227.0, 332.0, 213.0, 343.0, 554.0, light));
     world.push(FlipNormals::new(AARect::new(Plane::ZX, 0.0, 555.0, 0.0, 555.0, 555.0, white.clone())));
     world.push(AARect::new(Plane::ZX, 0.0, 555.0, 0.0, 555.0, 0.0, white.clone()));
-    world.push(FlipNormals::new(AARect::new(Plane::XY, 0.0, 555.0, 0.0, 555.0, 555.0, white)));
+    world.push(FlipNormals::new(AARect::new(Plane::XY, 0.0, 555.0, 0.0, 555.0, 555.0, white.clone())));
+    world.push(Cube::new(Vector3::new(130.0, 0.0, 65.0), Vector3::new(295.0, 165.0, 230.0), white.clone()));
+    world.push(Cube::new(Vector3::new(265.0, 0.0, 295.0), Vector3::new(430.0, 330.0, 460.0), white));
     Box::new(world)
 }
 
