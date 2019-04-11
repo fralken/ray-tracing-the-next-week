@@ -42,6 +42,7 @@ pub trait Material {
     fn emitted(&self, u: f32, v: f32, p: &Vector3<f32>) -> Vector3<f32>;
 }
 
+#[derive(Clone)]
 pub struct Lambertian<T: Texture> {
     albedo: T
 }
@@ -60,6 +61,7 @@ impl<T: Texture> Material for Lambertian<T> {
     fn emitted(&self, u: f32, v: f32, p: &Vector3<f32>) -> Vector3<f32> { Vector3::new(0.0, 0.0, 0.0) }
 }
 
+#[derive(Clone)]
 pub struct Metal {
     albedo: Vector3<f32>,
     fuzz: f32
@@ -86,6 +88,7 @@ impl Material for Metal {
     fn emitted(&self, u: f32, v: f32, p: &Vector3<f32>) -> Vector3<f32> { Vector3::new(0.0, 0.0, 0.0) }
 }
 
+#[derive(Clone)]
 pub struct Dielectric {
     ref_idx: f32
 }
@@ -119,6 +122,7 @@ impl Material for Dielectric {
     fn emitted(&self, u: f32, v: f32, p: &Vector3<f32>) -> Vector3<f32> { Vector3::new(0.0, 0.0, 0.0) }
 }
 
+#[derive(Clone)]
 pub struct DiffuseLight<T: Texture> {
     emit: T
 }
@@ -126,7 +130,6 @@ pub struct DiffuseLight<T: Texture> {
 impl<T: Texture> DiffuseLight<T> {
     pub fn new(emit: T) -> Self { DiffuseLight { emit } }
 }
-
 
 impl<T: Texture> Material for DiffuseLight<T> {
     fn scatter(&self, ray: &Ray, hit: &HitRecord) -> Option<(Ray, Vector3<f32>)> { None }
