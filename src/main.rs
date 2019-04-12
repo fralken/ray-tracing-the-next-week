@@ -6,6 +6,8 @@ mod material;
 mod sphere;
 mod rect;
 mod cube;
+mod translate;
+mod rotate;
 mod camera;
 mod aabb;
 mod bvh;
@@ -22,6 +24,8 @@ use crate::hitable::{Hitable, HitableList, FlipNormals};
 use crate::sphere::{Sphere, MovingSphere};
 use crate::rect::{AARect, Plane};
 use crate::cube::Cube;
+use crate::translate::Translate;
+use crate::rotate::{Rotate, Axis};
 use crate::camera::Camera;
 use crate::bvh::BVHNode;
 
@@ -104,8 +108,18 @@ fn cornell_box() -> Box<Hitable> {
     world.push(FlipNormals::new(AARect::new(Plane::ZX, 0.0, 555.0, 0.0, 555.0, 555.0, white.clone())));
     world.push(AARect::new(Plane::ZX, 0.0, 555.0, 0.0, 555.0, 0.0, white.clone()));
     world.push(FlipNormals::new(AARect::new(Plane::XY, 0.0, 555.0, 0.0, 555.0, 555.0, white.clone())));
-    world.push(Cube::new(Vector3::new(130.0, 0.0, 65.0), Vector3::new(295.0, 165.0, 230.0), white.clone()));
-    world.push(Cube::new(Vector3::new(265.0, 0.0, 295.0), Vector3::new(430.0, 330.0, 460.0), white));
+    world.push(
+        Translate::new(
+            Rotate::new(Axis::Y,
+                        Cube::new(Vector3::new(0.0, 0.0, 0.0), Vector3::new(165.0, 165.0, 165.0), white.clone()),
+                        -18.0),
+            Vector3::new(130.0, 0.0, 65.0)));
+    world.push(
+        Translate::new(
+            Rotate::new(Axis::Y,
+                        Cube::new(Vector3::new(0.0, 0.0, 0.0), Vector3::new(165.0, 330.0, 165.0), white),
+                        15.0),
+            Vector3::new(265.0, 0.0, 295.0)));
     Box::new(world)
 }
 
