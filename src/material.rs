@@ -58,7 +58,7 @@ impl<T: Texture> Material for Lambertian<T> {
         Some((scattered, self.albedo.value(hit.u, hit.v, &hit.p)))
     }
 
-    fn emitted(&self, u: f32, v: f32, p: &Vector3<f32>) -> Vector3<f32> { Vector3::new(0.0, 0.0, 0.0) }
+    fn emitted(&self, _u: f32, _v: f32, _p: &Vector3<f32>) -> Vector3<f32> { Vector3::zeros() }
 }
 
 #[derive(Clone)]
@@ -85,7 +85,7 @@ impl Material for Metal {
         }
     }
 
-    fn emitted(&self, u: f32, v: f32, p: &Vector3<f32>) -> Vector3<f32> { Vector3::new(0.0, 0.0, 0.0) }
+    fn emitted(&self, _u: f32, _v: f32, _p: &Vector3<f32>) -> Vector3<f32> { Vector3::zeros() }
 }
 
 #[derive(Clone)]
@@ -119,7 +119,7 @@ impl Material for Dielectric {
         Some((scattered, attenuation))
     }
 
-    fn emitted(&self, u: f32, v: f32, p: &Vector3<f32>) -> Vector3<f32> { Vector3::new(0.0, 0.0, 0.0) }
+    fn emitted(&self, _u: f32, _v: f32, _p: &Vector3<f32>) -> Vector3<f32> { Vector3::zeros() }
 }
 
 #[derive(Clone)]
@@ -132,9 +132,27 @@ impl<T: Texture> DiffuseLight<T> {
 }
 
 impl<T: Texture> Material for DiffuseLight<T> {
-    fn scatter(&self, ray: &Ray, hit: &HitRecord) -> Option<(Ray, Vector3<f32>)> { None }
+    fn scatter(&self, _ray: &Ray, _hit: &HitRecord) -> Option<(Ray, Vector3<f32>)> { None }
 
     fn emitted(&self, u: f32, v: f32, p: &Vector3<f32>) -> Vector3<f32> {
         self.emit.value(u, v, &p)
     }
+}
+
+#[derive(Clone)]
+pub struct Isotropic<T: Texture> {
+    albedo: T
+}
+
+impl<T: Texture> Isotropic<T> {
+    pub fn new(albedo: T) -> Self { Isotropic { albedo } }
+}
+
+impl<T: Texture> Material for Isotropic<T> {
+    fn scatter(&self, ray: &Ray, hit: &HitRecord) -> Option<(Ray, Vector3<f32>)> {
+        let scattered = Ray::new(hit.p, random_in_unit_sphere(), ray.time());
+        Some((scattered, self.albedo.value(hit.u, hit.v, &hit.p)))
+    }
+
+    fn emitted(&self, _u: f32, _v: f32, _p: &Vector3<f32>) -> Vector3<f32> { Vector3::zeros() }
 }

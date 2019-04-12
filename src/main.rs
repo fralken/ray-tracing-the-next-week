@@ -1,5 +1,6 @@
 mod ray;
 mod hitable;
+mod medium;
 mod texture;
 mod perlin;
 mod material;
@@ -21,6 +22,7 @@ use crate::ray::Ray;
 use crate::texture::{ConstantTexture, CheckerTexture, NoiseTexture, ImageTexture};
 use crate::material::{Lambertian, Metal, Dielectric, DiffuseLight};
 use crate::hitable::{Hitable, HitableList, FlipNormals};
+use crate::medium::ConstantMedium;
 use crate::sphere::{Sphere, MovingSphere};
 use crate::rect::{AARect, Plane};
 use crate::cube::Cube;
@@ -123,6 +125,35 @@ fn cornell_box() -> Box<Hitable> {
     Box::new(world)
 }
 
+fn cornell_smoke() -> Box<Hitable> {
+    let red = Lambertian::new(ConstantTexture::new(0.65, 0.05, 0.05));
+    let white = Lambertian::new(ConstantTexture::new(0.73, 0.73, 0.73));
+    let green = Lambertian::new(ConstantTexture::new(0.12, 0.45, 0.15));
+    let light = DiffuseLight::new(ConstantTexture::new(7.0, 7.0, 7.0));
+    let mut world = HitableList::default();
+    world.push(FlipNormals::new(AARect::new(Plane::YZ, 0.0, 555.0, 0.0, 555.0, 555.0, green)));
+    world.push(AARect::new(Plane::YZ, 0.0, 555.0, 0.0, 555.0, 0.0, red));
+    world.push(AARect::new(Plane::ZX, 127.0, 432.0, 113.0, 443.0, 554.0, light));
+    world.push(FlipNormals::new(AARect::new(Plane::ZX, 0.0, 555.0, 0.0, 555.0, 555.0, white.clone())));
+    world.push(AARect::new(Plane::ZX, 0.0, 555.0, 0.0, 555.0, 0.0, white.clone()));
+    world.push(FlipNormals::new(AARect::new(Plane::XY, 0.0, 555.0, 0.0, 555.0, 555.0, white.clone())));
+    let box1 =
+        Translate::new(
+            Rotate::new(Axis::Y,
+                        Cube::new(Vector3::new(0.0, 0.0, 0.0), Vector3::new(165.0, 165.0, 165.0), white.clone()),
+                        -18.0),
+            Vector3::new(130.0, 0.0, 65.0));
+    let box2 =
+        Translate::new(
+            Rotate::new(Axis::Y,
+                        Cube::new(Vector3::new(0.0, 0.0, 0.0), Vector3::new(165.0, 330.0, 165.0), white),
+                        15.0),
+            Vector3::new(265.0, 0.0, 295.0));
+    world.push(ConstantMedium::new(box1, 0.01, ConstantTexture::new(1.0, 1.0, 1.0)));
+    world.push(ConstantMedium::new(box2, 0.01, ConstantTexture::new(0.0, 0.0, 0.0)));
+    Box::new(world)
+}
+
 fn color(ray: &Ray, world: &Box<Hitable>, depth: i32) -> Vector3<f32> {
     if let Some(hit) = world.hit(ray, 0.001, f32::MAX) {
         let emitted = hit.material.emitted(hit.u, hit.v, &hit.p);
@@ -143,7 +174,7 @@ fn main() {
     let ny = 800;
     let ns = 100;
     println!("P3\n{} {}\n255", nx, ny);
-    let world = cornell_box();
+    let world = cornell_smoke();
     let look_from = Vector3::new(278.0, 278.0, -800.0);
     let look_at = Vector3::new(278.0, 278.0, 0.0);
     let focus_dist = 10.0;
