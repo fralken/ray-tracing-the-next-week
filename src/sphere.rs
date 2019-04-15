@@ -14,6 +14,7 @@ fn get_sphere_uv(p: &Vector3<f32>) -> (f32, f32) {
     (u, v)
 }
 
+#[derive(Clone)]
 pub struct Sphere<M: Material> {
     center: Vector3<f32>,
     radius: f32,

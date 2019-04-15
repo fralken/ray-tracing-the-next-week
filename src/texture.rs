@@ -51,7 +51,7 @@ impl NoiseTexture {
 
 impl Texture for NoiseTexture {
     fn value(&self, _u: f32, _v: f32, p: &Vector3<f32>) -> Vector3<f32> {
-        Vector3::new(1.0, 1.0, 1.0) * 0.5 * (1.0 + f32::sin(self.scale * p.z + 10.0 * self.noise.turb(&p, 7)))
+        Vector3::new(1.0, 1.0, 1.0) * 0.5 * (1.0 + f32::sin(self.scale * p.x + 5.0 * self.noise.turb(&p, 7)))
     }
 }
 
@@ -67,7 +67,7 @@ impl ImageTexture {
 }
 
 impl Texture for ImageTexture {
-    fn value(&self, u: f32, v: f32, p: &Vector3<f32>) -> Vector3<f32> {
+    fn value(&self, u: f32, v: f32, _p: &Vector3<f32>) -> Vector3<f32> {
         let nx = self.nx as usize;
         let ny = self.ny as usize;
         let mut i = (u * nx as f32) as usize;
