@@ -1,7 +1,7 @@
 use nalgebra::Vector3;
 use crate::perlin::Perlin;
 
-pub trait Texture {
+pub trait Texture: Send + Sync {
     fn value(&self, u: f32, v: f32, p: &Vector3<f32>) -> Vector3<f32>;
 }
 

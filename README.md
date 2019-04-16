@@ -12,4 +12,10 @@ Hence dependencies are:
 - [`rand`](https://rust-random.github.io/book/)
 - [`image`](https://github.com/image-rs/image)
 
+### Improvements
+
+I easily made the main loop parallel with the [`rayon`](https://crates.io/crates/rayon) crate.
+Just make sure that Traits are marked `Send` and `Sync` and then it's just a matter of using an `into_par_iter()` iterator.
+Also, reference counters (`Rc`) must be replaced with their atomic version (`Arc`).
+
 ![Ray Tracing](image.jpg)

@@ -1,5 +1,5 @@
 use std::cmp::Ordering;
-use std::rc::Rc;
+use std::sync::Arc;
 use rand::Rng;
 use crate::ray::Ray;
 use crate::hitable::{Hitable, HitRecord};
@@ -7,14 +7,14 @@ use crate::aabb;
 use crate::aabb::AABB;
 
 pub struct BVHNode {
-    left: Rc<Hitable>,
-    right: Rc<Hitable>,
+    left: Arc<Hitable>,
+    right: Arc<Hitable>,
     bbox: AABB
 }
 
 impl BVHNode {
-    pub fn new(hitable: &mut [Rc<Hitable>], time0: f32, time1: f32) -> Self {
-        fn box_compare(time0: f32, time1: f32, axis: usize) -> impl FnMut(&Rc<Hitable>, &Rc<Hitable>) -> Ordering {
+    pub fn new(hitable: &mut [Arc<Hitable>], time0: f32, time1: f32) -> Self {
+        fn box_compare(time0: f32, time1: f32, axis: usize) -> impl FnMut(&Arc<Hitable>, &Arc<Hitable>) -> Ordering {
             move |a, b| {
                 let a_bbox = a.bounding_box(time0, time1);
                 let b_bbox = b.bounding_box(time0, time1);
@@ -39,8 +39,8 @@ impl BVHNode {
             (hitable[0].clone(), hitable[1].clone())
         } else {
             (
-                Rc::new(BVHNode::new(&mut hitable[0..len/2], time0, time1)) as Rc<Hitable>,
-                Rc::new(BVHNode::new(&mut hitable[len/2..len], time0, time1)) as Rc<Hitable>
+                Arc::new(BVHNode::new(&mut hitable[0..len/2], time0, time1)) as Arc<Hitable>,
+                Arc::new(BVHNode::new(&mut hitable[len/2..len], time0, time1)) as Arc<Hitable>
             )
         };
         let left_bbox = left.bounding_box(time0, time1);

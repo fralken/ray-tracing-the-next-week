@@ -14,10 +14,11 @@ mod aabb;
 mod bvh;
 
 use std::f32;
-use std::rc::Rc;
+use std::sync::Arc;
 use nalgebra::Vector3;
 use rand::Rng;
 use image;
+use rayon::prelude::*;
 use crate::ray::Ray;
 use crate::texture::{ConstantTexture, CheckerTexture, NoiseTexture, ImageTexture};
 use crate::material::{Lambertian, Metal, Dielectric, DiffuseLight};
@@ -34,32 +35,32 @@ use crate::bvh::BVHNode;
 fn random_scene() -> Box<Hitable> {
     let mut rng = rand::thread_rng();
     let origin = Vector3::new(4.0, 0.2, 0.0);
-    let mut world: Vec<Rc<Hitable>> = Vec::new();
+    let mut world: Vec<Arc<Hitable>> = Vec::new();
     let checker = CheckerTexture::new(ConstantTexture::new(0.2, 0.3, 0.1), ConstantTexture::new(0.9, 0.9, 0.9));
-    world.push(Rc::new(Sphere::new(Vector3::new(0.0, -1000.0, 0.0), 1000.0, Lambertian::new(checker))));
+    world.push(Arc::new(Sphere::new(Vector3::new(0.0, -1000.0, 0.0), 1000.0, Lambertian::new(checker))));
     for a in -10..10 {
         for b in -10..10 {
             let choose_material = rng.gen::<f32>();
             let center = Vector3::new(a as f32 + 0.9 * rng.gen::<f32>(), 0.2, b as f32 + 0.9 * rng.gen::<f32>());
             if (center - origin).magnitude() > 0.9 {
                 if choose_material < 0.8 { // diffuse
-                    world.push(Rc::new(
+                    world.push(Arc::new(
                         MovingSphere::new(center, center + Vector3::new(0.0, 0.5 * rng.gen::<f32>(), 0.0),0.0,1.0,0.2,
                                     Lambertian::new(ConstantTexture::new(rng.gen::<f32>() * rng.gen::<f32>(), rng.gen::<f32>() * rng.gen::<f32>(), rng.gen::<f32>() * rng.gen::<f32>())))));
                 } else if choose_material < 0.95 { // metal
-                    world.push(Rc::new(
+                    world.push(Arc::new(
                         Sphere::new(center, 0.2,
                                     Metal::new(Vector3::new(0.5 * (1.0 + rng.gen::<f32>()), 0.5 * (1.0 + rng.gen::<f32>()), 0.5 * (1.0 + rng.gen::<f32>())), 0.5 * rng.gen::<f32>()))));
                 } else { // glass
-                    world.push(Rc::new(
+                    world.push(Arc::new(
                         Sphere::new(center, 0.2, Dielectric::new(1.5))));
                 }
             }
         }
     }
-    world.push(Rc::new(Sphere::new(Vector3::new(0.0, 1.0, 0.0), 1.0, Dielectric::new(1.5))));
-    world.push(Rc::new(Sphere::new(Vector3::new(-4.0, 1.0, 0.0), 1.0, Lambertian::new(ConstantTexture::new(0.4, 0.2, 0.1)))));
-    world.push(Rc::new(Sphere::new(Vector3::new(4.0, 1.0, 0.0), 1.0, Metal::new(Vector3::new(0.7, 0.6, 0.5), 0.0))));
+    world.push(Arc::new(Sphere::new(Vector3::new(0.0, 1.0, 0.0), 1.0, Dielectric::new(1.5))));
+    world.push(Arc::new(Sphere::new(Vector3::new(-4.0, 1.0, 0.0), 1.0, Lambertian::new(ConstantTexture::new(0.4, 0.2, 0.1)))));
+    world.push(Arc::new(Sphere::new(Vector3::new(4.0, 1.0, 0.0), 1.0, Metal::new(Vector3::new(0.7, 0.6, 0.5), 0.0))));
     Box::new(BVHNode::new(&mut world, 0.0, 1.0))
 }
 
@@ -159,7 +160,7 @@ fn final_scene() -> Box<Hitable> {
     let white = Lambertian::new(ConstantTexture::new(0.73, 0.73, 0.73));
     let ground = Lambertian::new(ConstantTexture::new(0.48, 0.83, 0.53));
     let mut world = HitableList::default();
-    let mut box_list1: Vec<Rc<Hitable>> = Vec::new();
+    let mut box_list1: Vec<Arc<Hitable>> = Vec::new();
     let nb = 20;
     for i in 0..nb {
         for j in 0..20 {
@@ -170,7 +171,7 @@ fn final_scene() -> Box<Hitable> {
             let x1 = x0 + w;
             let y1 = 100.0 * (rng.gen::<f32>() + 0.01);
             let z1 = z0 + w;
-            box_list1.push(Rc::new(Cube::new(Vector3::new(x0, y0, z0), Vector3::new(x1, y1, z1), ground.clone())));
+            box_list1.push(Arc::new(Cube::new(Vector3::new(x0, y0, z0), Vector3::new(x1, y1, z1), ground.clone())));
         }
     }
     world.push(BVHNode::new(&mut box_list1, 0.0, 1.0));
@@ -191,10 +192,10 @@ fn final_scene() -> Box<Hitable> {
     let texture = ImageTexture::new(data, nx, ny);
     world.push(Sphere::new(Vector3::new(400.0, 200.0, 400.0), 100.0, Lambertian::new(texture)));
     world.push(Sphere::new(Vector3::new(220.0, 280.0, 300.0), 80.0, Lambertian::new(NoiseTexture::new(0.1))));
-    let mut box_list2: Vec<Rc<Hitable>> = Vec::new();
+    let mut box_list2: Vec<Arc<Hitable>> = Vec::new();
     let ns = 1000;
     for _ in 0..ns {
-        box_list2.push(Rc::new(Sphere::new(Vector3::new(165.0 * rng.gen::<f32>(), 165.0 * rng.gen::<f32>(), 165.0 * rng.gen::<f32>()), 10.0, white.clone())));
+        box_list2.push(Arc::new(Sphere::new(Vector3::new(165.0 * rng.gen::<f32>(), 165.0 * rng.gen::<f32>(), 165.0 * rng.gen::<f32>()), 10.0, white.clone())));
     }
     world.push(
         Translate::new(
@@ -221,7 +222,6 @@ fn color(ray: &Ray, world: &Box<Hitable>, depth: i32) -> Vector3<f32> {
 }
 
 fn main() {
-    let mut rng = rand::thread_rng();
     let nx = 800;
     let ny = 800;
     let ns = 100;
@@ -234,21 +234,23 @@ fn main() {
     let cam = Camera::new(
         look_from, look_at, Vector3::new(0.0, 1.0, 0.0),
         40.0, nx as f32 / ny as f32, aperture, focus_dist, 0.0, 1.0);
-    for j in (0..ny).rev() {
-        for i in 0..nx {
-            let mut col = Vector3::new(0.0, 0.0, 0.0);
-            for _ in 0..ns {
-                let u = (i as f32 + rng.gen::<f32>()) / nx as f32;
-                let v = (j as f32 + rng.gen::<f32>()) / ny as f32;
-                let ray = cam.get_ray(u, v);
-                col += color(&ray, &world, 0);
-            }
-            col /= ns as f32;
-            for c in col.iter_mut() { *c = nalgebra::clamp(c.sqrt(), 0.0, 1.0); }
-            let ir = (255.99 * col[0]) as i32;
-            let ig = (255.99 * col[1]) as i32;
-            let ib = (255.99 * col[2]) as i32;
-            println!("{} {} {}", ir, ig, ib);
-        }
+    let image =
+        (0..ny).into_par_iter().rev()
+            .flat_map(|y|
+                (0..nx).flat_map(|x| {
+                    let col: Vector3<f32> = (0..ns).map(|_| {
+                        let mut rng = rand::thread_rng();
+                        let u = (x as f32 + rng.gen::<f32>()) / nx as f32;
+                        let v = (y as f32 + rng.gen::<f32>()) / ny as f32;
+                        let ray = cam.get_ray(u, v);
+                        color(&ray, &world, 0)
+                    }).sum();
+                    col.iter().map(|c|
+                        (255.99 * (c / ns as f32).sqrt().max(0.0).min(1.0)) as u8
+                    ).collect::<Vec<u8>>()
+                }).collect::<Vec<u8>>()
+            ).collect::<Vec<u8>>();
+    for col in image.chunks(3) {
+       println!("{} {} {}", col[0], col[1], col[2]);
     }
 }

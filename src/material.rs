@@ -36,7 +36,7 @@ fn schlick(cosine: f32, ref_idx: f32) -> f32 {
     r0 + (1.0 -r0) * (1.0 - cosine).powi(5)
 }
 
-pub trait Material {
+pub trait Material: Send + Sync {
     fn scatter(&self, ray: &Ray, hit: &HitRecord) -> Option<(Ray, Vector3<f32>)>;
 
     fn emitted(&self, u: f32, v: f32, p: &Vector3<f32>) -> Vector3<f32>;
