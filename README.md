@@ -1,8 +1,16 @@
-## Ray tracing the next week, in Rust
+## Ray tracing: the next week, in Rust
 
-This is an implementation in Rust of [Peter Shirley's "Ray Tracing The Next Week"](https://github.com/petershirley/raytracingthenextweek) book.
+This is an implementation in Rust of [Peter Shirley's "Ray Tracing: The Next Week"](https://github.com/petershirley/raytracingthenextweek) book.
+This is the second of the series:
+
+- [Ray tracing in one weekend, in Rust](https://github.com/fralken/ray-tracing-in-one-weekend)
+- Ray tracing: the next week, in Rust
+- [Ray tracing: the rest of your life, in Rust](https://github.com/fralken/ray-tracing-the-rest-of-your-life)
 
 Every tagged commit is the code that generates a specific image. In this way it's easy to follow the progress in the book.
+First `git clone` this project. Then you can checkout a `tag` to retrieve the implementation at a specific chapter in the book.
+For example, with `git checkout tags/chapter_06.2` you get the implementation for the second image of chapter 6.
+With `git checkout master` you go back to the latest version.
 
 Instead of implementing my own `vec3`, I preferred using `Vector3` from [`nalgebra`](https://crates.io/crates/nalgebra) crate.
 For random numbers I used [`rand`](https://crates.io/crates/rand). For image loading I used [`image`](https://crates.io/crates/image)
@@ -11,6 +19,10 @@ Hence dependencies are:
 - [`nalgebra`](https://www.nalgebra.org)
 - [`rand`](https://rust-random.github.io/book/)
 - [`image`](https://github.com/image-rs/image)
+
+### What next
+
+You can go on with my Rust implementation for the third book, ["Ray tracing: the rest of your life, in Rust"](https://github.com/fralken/ray-tracing-the-rest-of-your-life).
 
 ### Improvements
 
