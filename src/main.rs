@@ -14,7 +14,6 @@ mod aabb;
 mod bvh;
 
 use std::f32;
-use std::sync::Arc;
 use nalgebra::Vector3;
 use rand::Rng;
 use image;
@@ -30,38 +29,38 @@ use crate::cube::Cube;
 use crate::translate::Translate;
 use crate::rotate::{Rotate, Axis};
 use crate::camera::Camera;
-use crate::bvh::BVHNode;
+use crate::bvh::BVH;
 
 fn random_scene() -> Box<Hitable> {
     let mut rng = rand::thread_rng();
     let origin = Vector3::new(4.0, 0.2, 0.0);
-    let mut world: Vec<Arc<Hitable>> = Vec::new();
+    let mut world: Vec<Box<Hitable>> = Vec::new();
     let checker = CheckerTexture::new(ConstantTexture::new(0.2, 0.3, 0.1), ConstantTexture::new(0.9, 0.9, 0.9));
-    world.push(Arc::new(Sphere::new(Vector3::new(0.0, -1000.0, 0.0), 1000.0, Lambertian::new(checker))));
+    world.push(Box::new(Sphere::new(Vector3::new(0.0, -1000.0, 0.0), 1000.0, Lambertian::new(checker))));
     for a in -10..10 {
         for b in -10..10 {
             let choose_material = rng.gen::<f32>();
             let center = Vector3::new(a as f32 + 0.9 * rng.gen::<f32>(), 0.2, b as f32 + 0.9 * rng.gen::<f32>());
             if (center - origin).magnitude() > 0.9 {
                 if choose_material < 0.8 { // diffuse
-                    world.push(Arc::new(
+                    world.push(Box::new(
                         MovingSphere::new(center, center + Vector3::new(0.0, 0.5 * rng.gen::<f32>(), 0.0),0.0,1.0,0.2,
                                     Lambertian::new(ConstantTexture::new(rng.gen::<f32>() * rng.gen::<f32>(), rng.gen::<f32>() * rng.gen::<f32>(), rng.gen::<f32>() * rng.gen::<f32>())))));
                 } else if choose_material < 0.95 { // metal
-                    world.push(Arc::new(
+                    world.push(Box::new(
                         Sphere::new(center, 0.2,
                                     Metal::new(Vector3::new(0.5 * (1.0 + rng.gen::<f32>()), 0.5 * (1.0 + rng.gen::<f32>()), 0.5 * (1.0 + rng.gen::<f32>())), 0.5 * rng.gen::<f32>()))));
                 } else { // glass
-                    world.push(Arc::new(
+                    world.push(Box::new(
                         Sphere::new(center, 0.2, Dielectric::new(1.5))));
                 }
             }
         }
     }
-    world.push(Arc::new(Sphere::new(Vector3::new(0.0, 1.0, 0.0), 1.0, Dielectric::new(1.5))));
-    world.push(Arc::new(Sphere::new(Vector3::new(-4.0, 1.0, 0.0), 1.0, Lambertian::new(ConstantTexture::new(0.4, 0.2, 0.1)))));
-    world.push(Arc::new(Sphere::new(Vector3::new(4.0, 1.0, 0.0), 1.0, Metal::new(Vector3::new(0.7, 0.6, 0.5), 0.0))));
-    Box::new(BVHNode::new(&mut world, 0.0, 1.0))
+    world.push(Box::new(Sphere::new(Vector3::new(0.0, 1.0, 0.0), 1.0, Dielectric::new(1.5))));
+    world.push(Box::new(Sphere::new(Vector3::new(-4.0, 1.0, 0.0), 1.0, Lambertian::new(ConstantTexture::new(0.4, 0.2, 0.1)))));
+    world.push(Box::new(Sphere::new(Vector3::new(4.0, 1.0, 0.0), 1.0, Metal::new(Vector3::new(0.7, 0.6, 0.5), 0.0))));
+    Box::new(BVH::new( world, 0.0, 1.0))
 }
 
 fn two_spheres() -> Box<Hitable> {
@@ -160,7 +159,7 @@ fn final_scene() -> Box<Hitable> {
     let white = Lambertian::new(ConstantTexture::new(0.73, 0.73, 0.73));
     let ground = Lambertian::new(ConstantTexture::new(0.48, 0.83, 0.53));
     let mut world = HitableList::default();
-    let mut box_list1: Vec<Arc<Hitable>> = Vec::new();
+    let mut box_list1: Vec<Box<Hitable>> = Vec::new();
     let nb = 20;
     for i in 0..nb {
         for j in 0..20 {
@@ -171,10 +170,10 @@ fn final_scene() -> Box<Hitable> {
             let x1 = x0 + w;
             let y1 = 100.0 * (rng.gen::<f32>() + 0.01);
             let z1 = z0 + w;
-            box_list1.push(Arc::new(Cube::new(Vector3::new(x0, y0, z0), Vector3::new(x1, y1, z1), ground.clone())));
+            box_list1.push(Box::new(Cube::new(Vector3::new(x0, y0, z0), Vector3::new(x1, y1, z1), ground.clone())));
         }
     }
-    world.push(BVHNode::new(&mut box_list1, 0.0, 1.0));
+    world.push(BVH::new(box_list1, 0.0, 1.0));
     let light = DiffuseLight::new(ConstantTexture::new(7.0, 7.0, 7.0));
     world.push(AARect::new(Plane::ZX, 147.0, 412.0, 123.0, 423.0, 554.0, light));
     let center = Vector3::new(400.0, 400.0, 200.0);
@@ -192,15 +191,15 @@ fn final_scene() -> Box<Hitable> {
     let texture = ImageTexture::new(data, nx, ny);
     world.push(Sphere::new(Vector3::new(400.0, 200.0, 400.0), 100.0, Lambertian::new(texture)));
     world.push(Sphere::new(Vector3::new(220.0, 280.0, 300.0), 80.0, Lambertian::new(NoiseTexture::new(0.1))));
-    let mut box_list2: Vec<Arc<Hitable>> = Vec::new();
+    let mut box_list2: Vec<Box<Hitable>> = Vec::new();
     let ns = 1000;
     for _ in 0..ns {
-        box_list2.push(Arc::new(Sphere::new(Vector3::new(165.0 * rng.gen::<f32>(), 165.0 * rng.gen::<f32>(), 165.0 * rng.gen::<f32>()), 10.0, white.clone())));
+        box_list2.push(Box::new(Sphere::new(Vector3::new(165.0 * rng.gen::<f32>(), 165.0 * rng.gen::<f32>(), 165.0 * rng.gen::<f32>()), 10.0, white.clone())));
     }
     world.push(
         Translate::new(
             Rotate::new(Axis::Y,
-                        BVHNode::new(&mut box_list2, 0.0, 0.1),
+                        BVH::new(box_list2, 0.0, 0.1),
                         15.0),
             Vector3::new(-100.0, 270.0, 395.0))
     );

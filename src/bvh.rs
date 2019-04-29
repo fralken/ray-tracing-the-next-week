@@ -1,72 +1,88 @@
+use std::f32;
 use std::cmp::Ordering;
-use std::sync::Arc;
-use rand::Rng;
 use crate::ray::Ray;
 use crate::hitable::{Hitable, HitRecord};
 use crate::aabb;
 use crate::aabb::AABB;
 
-pub struct BVHNode {
-    left: Arc<Hitable>,
-    right: Arc<Hitable>,
+enum BVHNode {
+    Branch { left: Box<BVH>, right: Box<BVH> },
+    Leaf(Box<Hitable>)
+}
+
+pub struct BVH {
+    tree: BVHNode,
     bbox: AABB
 }
 
-impl BVHNode {
-    pub fn new(hitable: &mut [Arc<Hitable>], time0: f32, time1: f32) -> Self {
-        fn box_compare(time0: f32, time1: f32, axis: usize) -> impl FnMut(&Arc<Hitable>, &Arc<Hitable>) -> Ordering {
+impl BVH {
+    pub fn new(mut hitable: Vec<Box<Hitable>>, time0: f32, time1: f32) -> Self {
+        fn box_compare(time0: f32, time1: f32, axis: usize) -> impl FnMut(&Box<Hitable>, &Box<Hitable>) -> Ordering {
             move |a, b| {
                 let a_bbox = a.bounding_box(time0, time1);
                 let b_bbox = b.bounding_box(time0, time1);
-                if a_bbox.is_none() || b_bbox.is_none() {
-                    panic!["no bounding box in bvh node"]
-                }
-                if a_bbox.unwrap().min[axis] - b_bbox.unwrap().min[axis] < 0.0 {
-                    Ordering::Less
+                if let (Some(a), Some(b)) = (a_bbox, b_bbox) {
+                    let ac = a.min[axis] + a.max[axis];
+                    let bc = b.min[axis] + b.max[axis];
+                    ac.partial_cmp(&bc).unwrap()
                 } else {
-                    Ordering::Greater
+                    panic!["no bounding box in bvh node"]
                 }
             }
         }
 
-        let axis = rand::thread_rng().gen_range(0, 3) as usize;
+        fn axis_range(hitable: &Vec<Box<Hitable>>, time0: f32, time1: f32, axis: usize) -> f32 {
+            let (min, max) = hitable.iter().fold((f32::MAX, f32::MIN), |(bmin, bmax), hit| {
+                if let Some(aabb) = hit.bounding_box(time0, time1) {
+                    (bmin.min(aabb.min[axis]), bmax.max(aabb.max[axis]))
+                } else {
+                    (bmin, bmax)
+                }
+            });
+            max - min
+        }
+
+        let mut axis_ranges: Vec<(usize, f32)> = (0..3)
+            .map(|a| (a, axis_range(&hitable, time0, time1, a)))
+            .collect();
+
+        axis_ranges.sort_unstable_by(|a, b| b.1.partial_cmp(&a.1).unwrap());
+
+        let axis = axis_ranges[0].0;
 
         hitable.sort_unstable_by(box_compare(time0, time1, axis));
         let len = hitable.len();
-        let (left, right) = if len == 1 {
-            (hitable[0].clone(), hitable[0].clone())
-        } else if len == 2 {
-            (hitable[0].clone(), hitable[1].clone())
-        } else {
-            (
-                Arc::new(BVHNode::new(&mut hitable[0..len/2], time0, time1)) as Arc<Hitable>,
-                Arc::new(BVHNode::new(&mut hitable[len/2..len], time0, time1)) as Arc<Hitable>
-            )
-        };
-        let left_bbox = left.bounding_box(time0, time1);
-        let right_bbox = right.bounding_box(time0, time1);
-        if left_bbox.is_none() || right_bbox.is_none() {
-            panic!["no bounding box in bvh node"]
-        }
-
-        BVHNode {
-            left,
-            right,
-            bbox: aabb::surrounding_box(&left_bbox.unwrap(), &right_bbox.unwrap())
+        match len {
+            0 => panic!["no elements in scene"],
+            1 => {
+                let leaf = hitable.pop().unwrap();
+                if let Some(bbox) = leaf.bounding_box(time0, time1) {
+                    BVH { tree: BVHNode::Leaf(leaf), bbox }
+                } else {
+                    panic!["no bounding box in bvh node"]
+                }
+            },
+            _ => {
+                let right = BVH::new(hitable.drain(len / 2..).collect(), time0, time1);
+                let left = BVH::new(hitable, time0, time1);
+                let bbox = aabb::surrounding_box(&left.bbox, &right.bbox);
+                BVH { tree: BVHNode::Branch { left: Box::new(left), right: Box::new(right) }, bbox }
+            }
         }
     }
 }
 
-impl Hitable for BVHNode {
-    fn hit(&self, ray: &Ray, t_min: f32, t_max: f32) -> Option<HitRecord> {
+impl Hitable for BVH {
+    fn hit(&self, ray: &Ray, t_min: f32, mut t_max: f32) -> Option<HitRecord> {
         if self.bbox.hit(&ray, t_min, t_max) {
-            let left = self.left.hit(&ray, t_min, t_max);
-            let right = self.right.hit(&ray, t_min, t_max);
-            match (left, right) {
-                (Some(l), Some(r)) => if l.t < r.t { Some(l) } else { Some(r) },
-                (Some(l), None) => Some(l),
-                (None, Some(r)) => Some(r),
-                _ => None
+            match &self.tree {
+                BVHNode::Leaf(leaf) => leaf.hit(&ray, t_min, t_max),
+                BVHNode::Branch { left, right} => {
+                    let left = left.hit(&ray, t_min, t_max);
+                    if let Some(l) = &left { t_max = l.t };
+                    let right = right.hit(&ray, t_min, t_max);
+                    if right.is_some() { right } else { left }
+                }
             }
         } else {
             None
@@ -74,6 +90,6 @@ impl Hitable for BVHNode {
     }
 
     fn bounding_box(&self, _t0: f32, _t1: f32) -> Option<AABB> {
-        Some(self.bbox.clone())
+        Some(self.bbox)
     }
 }
