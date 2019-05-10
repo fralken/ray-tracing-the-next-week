@@ -28,7 +28,6 @@ You can go on with my Rust implementation for the third book, ["Ray tracing: the
 
 - I easily made the main loop parallel with the [`rayon`](https://crates.io/crates/rayon) crate.
 Just make sure that Traits are marked `Send` and `Sync` and then it's just a matter of using an `into_par_iter()` iterator.
-Also, reference counters (`Rc`) must be replaced with their atomic version (`Arc`).
 - I improved BVH implementation<sup>[1](#footnote1)</sup>, e.g. split axis are not chosen randomly but based on widest extension of bounding box along that axis.
 Objects are sorted along their (doubled) centroid and not their minimum bounding coordinate. Also, I used `Box` instead of `Arc` when building the BVH.
 
