@@ -1,6 +1,6 @@
 ## Ray tracing: the next week, in Rust
 
-This is an implementation in Rust of [Peter Shirley's "Ray Tracing: The Next Week"](https://github.com/petershirley/raytracingthenextweek) book.
+This is an implementation in Rust of [Peter Shirley's "Ray Tracing: The Next Week"](https://raytracing.github.io/books/RayTracingTheNextWeek.html) book.
 This is the second of the series:
 
 - [Ray tracing in one weekend, in Rust](https://github.com/fralken/ray-tracing-in-one-weekend)
