@@ -29,6 +29,7 @@ pub struct CheckerTexture<T: Texture, U: Texture> {
 }
 
 impl<T: Texture, U: Texture> CheckerTexture<T, U> {
+    #[allow(dead_code)]
     pub fn new(odd: T, even: U) -> Self { CheckerTexture { odd, even } }
 }
 

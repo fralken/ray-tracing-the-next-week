@@ -4,6 +4,7 @@ use crate::ray::Ray;
 use crate::hitable::{Hitable, HitRecord};
 use crate::aabb::AABB;
 
+#[allow(dead_code)]
 pub enum Axis {
     X,
     Y,

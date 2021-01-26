@@ -7,7 +7,7 @@ use crate::aabb::AABB;
 
 enum BVHNode {
     Branch { left: Box<BVH>, right: Box<BVH> },
-    Leaf(Box<Hitable>)
+    Leaf(Box<dyn Hitable>)
 }
 
 pub struct BVH {
@@ -16,8 +16,8 @@ pub struct BVH {
 }
 
 impl BVH {
-    pub fn new(mut hitable: Vec<Box<Hitable>>, time0: f32, time1: f32) -> Self {
-        fn box_compare(time0: f32, time1: f32, axis: usize) -> impl FnMut(&Box<Hitable>, &Box<Hitable>) -> Ordering {
+    pub fn new(mut hitable: Vec<Box<dyn Hitable>>, time0: f32, time1: f32) -> Self {
+        fn box_compare(time0: f32, time1: f32, axis: usize) -> impl FnMut(&Box<dyn Hitable>, &Box<dyn Hitable>) -> Ordering {
             move |a, b| {
                 let a_bbox = a.bounding_box(time0, time1);
                 let b_bbox = b.bounding_box(time0, time1);
@@ -31,7 +31,7 @@ impl BVH {
             }
         }
 
-        fn axis_range(hitable: &Vec<Box<Hitable>>, time0: f32, time1: f32, axis: usize) -> f32 {
+        fn axis_range(hitable: &Vec<Box<dyn Hitable>>, time0: f32, time1: f32, axis: usize) -> f32 {
             let (min, max) = hitable.iter().fold((f32::MAX, f32::MIN), |(bmin, bmax), hit| {
                 if let Some(aabb) = hit.bounding_box(time0, time1) {
                     (bmin.min(aabb.min[axis]), bmax.max(aabb.max[axis]))

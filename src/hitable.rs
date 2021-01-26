@@ -10,7 +10,7 @@ pub struct HitRecord<'a> {
     pub v: f32,
     pub p: Vector3<f32>,
     pub normal: Vector3<f32>,
-    pub material: &'a Material
+    pub material: &'a dyn Material
 }
 
 pub trait Hitable: Sync {
@@ -20,7 +20,7 @@ pub trait Hitable: Sync {
 
 #[derive(Default)]
 pub struct HitableList {
-    list: Vec<Box<Hitable>>
+    list: Vec<Box<dyn Hitable>>
 }
 
 impl HitableList {

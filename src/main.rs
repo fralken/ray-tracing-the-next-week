@@ -31,10 +31,11 @@ use crate::rotate::{Rotate, Axis};
 use crate::camera::Camera;
 use crate::bvh::BVH;
 
-fn random_scene() -> Box<Hitable> {
+#[allow(dead_code)]
+fn random_scene() -> Box<dyn Hitable> {
     let mut rng = rand::thread_rng();
     let origin = Vector3::new(4.0, 0.2, 0.0);
-    let mut world: Vec<Box<Hitable>> = Vec::new();
+    let mut world: Vec<Box<dyn Hitable>> = Vec::new();
     let checker = CheckerTexture::new(ConstantTexture::new(0.2, 0.3, 0.1), ConstantTexture::new(0.9, 0.9, 0.9));
     world.push(Box::new(Sphere::new(Vector3::new(0.0, -1000.0, 0.0), 1000.0, Lambertian::new(checker))));
     for a in -10..10 {
@@ -63,7 +64,8 @@ fn random_scene() -> Box<Hitable> {
     Box::new(BVH::new( world, 0.0, 1.0))
 }
 
-fn two_spheres() -> Box<Hitable> {
+#[allow(dead_code)]
+fn two_spheres() -> Box<dyn Hitable> {
     let checker = CheckerTexture::new(ConstantTexture::new(0.2, 0.3, 0.1), ConstantTexture::new(0.9, 0.9, 0.9));
     let mut world = HitableList::default();
     world.push(Sphere::new(Vector3::new(0.0, -10.0, 0.0), 10.0, Lambertian::new(checker.clone())));
@@ -71,7 +73,8 @@ fn two_spheres() -> Box<Hitable> {
     Box::new(world)
 }
 
-fn two_perlin_spheres() -> Box<Hitable> {
+#[allow(dead_code)]
+fn two_perlin_spheres() -> Box<dyn Hitable> {
     let noise = NoiseTexture::new(4.0);
     let mut world = HitableList::default();
     world.push(Sphere::new(Vector3::new(0.0, -1000.0, 0.0), 1000.0, Lambertian::new(noise.clone())));
@@ -79,7 +82,8 @@ fn two_perlin_spheres() -> Box<Hitable> {
     Box::new(world)
 }
 
-fn earth() -> Box<Hitable> {
+#[allow(dead_code)]
+fn earth() -> Box<dyn Hitable> {
     let image = image::open("earthmap.png").expect("image not found").to_rgb();
     let (nx, ny) = image.dimensions();
     let data = image.into_raw();
@@ -88,7 +92,8 @@ fn earth() -> Box<Hitable> {
     Box::new(earth)
 }
 
-fn simple_light() -> Box<Hitable> {
+#[allow(dead_code)]
+fn simple_light() -> Box<dyn Hitable> {
     let noise = NoiseTexture::new(4.0);
     let mut world = HitableList::default();
     world.push(Sphere::new(Vector3::new(0.0, -1000.0, 0.0), 1000.0, Lambertian::new(noise.clone())));
@@ -98,7 +103,8 @@ fn simple_light() -> Box<Hitable> {
     Box::new(world)
 }
 
-fn cornell_box() -> Box<Hitable> {
+#[allow(dead_code)]
+fn cornell_box() -> Box<dyn Hitable> {
     let red = Lambertian::new(ConstantTexture::new(0.65, 0.05, 0.05));
     let white = Lambertian::new(ConstantTexture::new(0.73, 0.73, 0.73));
     let green = Lambertian::new(ConstantTexture::new(0.12, 0.45, 0.15));
@@ -125,7 +131,8 @@ fn cornell_box() -> Box<Hitable> {
     Box::new(world)
 }
 
-fn cornell_smoke() -> Box<Hitable> {
+#[allow(dead_code)]
+fn cornell_smoke() -> Box<dyn Hitable> {
     let red = Lambertian::new(ConstantTexture::new(0.65, 0.05, 0.05));
     let white = Lambertian::new(ConstantTexture::new(0.73, 0.73, 0.73));
     let green = Lambertian::new(ConstantTexture::new(0.12, 0.45, 0.15));
@@ -154,12 +161,12 @@ fn cornell_smoke() -> Box<Hitable> {
     Box::new(world)
 }
 
-fn final_scene() -> Box<Hitable> {
+fn final_scene() -> Box<dyn Hitable> {
     let mut rng = rand::thread_rng();
     let white = Lambertian::new(ConstantTexture::new(0.73, 0.73, 0.73));
     let ground = Lambertian::new(ConstantTexture::new(0.48, 0.83, 0.53));
     let mut world = HitableList::default();
-    let mut box_list1: Vec<Box<Hitable>> = Vec::new();
+    let mut box_list1: Vec<Box<dyn Hitable>> = Vec::new();
     let nb = 20;
     for i in 0..nb {
         for j in 0..20 {
@@ -191,7 +198,7 @@ fn final_scene() -> Box<Hitable> {
     let texture = ImageTexture::new(data, nx, ny);
     world.push(Sphere::new(Vector3::new(400.0, 200.0, 400.0), 100.0, Lambertian::new(texture)));
     world.push(Sphere::new(Vector3::new(220.0, 280.0, 300.0), 80.0, Lambertian::new(NoiseTexture::new(0.1))));
-    let mut box_list2: Vec<Box<Hitable>> = Vec::new();
+    let mut box_list2: Vec<Box<dyn Hitable>> = Vec::new();
     let ns = 1000;
     for _ in 0..ns {
         box_list2.push(Box::new(Sphere::new(Vector3::new(165.0 * rng.gen::<f32>(), 165.0 * rng.gen::<f32>(), 165.0 * rng.gen::<f32>()), 10.0, white.clone())));
@@ -206,7 +213,7 @@ fn final_scene() -> Box<Hitable> {
     Box::new(world)
 }
 
-fn color(ray: &Ray, world: &Box<Hitable>, depth: i32) -> Vector3<f32> {
+fn color(ray: &Ray, world: &Box<dyn Hitable>, depth: i32) -> Vector3<f32> {
     if let Some(hit) = world.hit(ray, 0.001, f32::MAX) {
         let emitted = hit.material.emitted(hit.u, hit.v, &hit.p);
         if depth < 50 {
