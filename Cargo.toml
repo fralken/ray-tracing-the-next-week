@@ -5,7 +5,7 @@ authors = ["Francesco MDE"]
 edition = "2018"
 
 [dependencies]
-nalgebra = "0.18.0"
-rand = "0.6.5"
-image = "0.23.5"
-rayon = "1.0.3"
+nalgebra = "0.31.0"
+rand = "0.8.5"
+image = "0.24.2"
+rayon = "1.5"

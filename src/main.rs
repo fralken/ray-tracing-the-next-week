@@ -84,7 +84,7 @@ fn two_perlin_spheres() -> Box<dyn Hitable> {
 
 #[allow(dead_code)]
 fn earth() -> Box<dyn Hitable> {
-    let image = image::open("earthmap.png").expect("image not found").to_rgb();
+    let image = image::open("earthmap.png").expect("image not found").to_rgb8();
     let (nx, ny) = image.dimensions();
     let data = image.into_raw();
     let texture = ImageTexture::new(data, nx, ny);
@@ -192,7 +192,7 @@ fn final_scene() -> Box<dyn Hitable> {
     world.push(ConstantMedium::new(boundary, 0.2, ConstantTexture::new(0.2, 0.4, 0.9)));
     let boundary = Sphere::new(Vector3::new(0.0, 0.0, 0.0), 5000.0, Dielectric::new(1.5));
     world.push(ConstantMedium::new(boundary, 0.0001, ConstantTexture::new(1.0, 1.0, 1.0)));
-    let image = image::open("earthmap.png").expect("image not found").to_rgb();
+    let image = image::open("earthmap.png").expect("image not found").to_rgb8();
     let (nx, ny) = image.dimensions();
     let data = image.into_raw();
     let texture = ImageTexture::new(data, nx, ny);

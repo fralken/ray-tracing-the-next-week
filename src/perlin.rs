@@ -16,7 +16,7 @@ fn perlin_generate() -> Vec<Vector3<f32>> {
 fn permute(p: &mut [usize], n: usize) {
     let mut rng = rand::thread_rng();
     for i in (0..n as usize).rev() {
-        let target = rng.gen_range(0, i+1);
+        let target = rng.gen_range(0..=i);
         p.swap(i, target);
     }
 }
